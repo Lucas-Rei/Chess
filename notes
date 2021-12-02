@@ -1,0 +1,35 @@
+// MECHANICS //
+- initial background sample
+- chess piece samples
+- chess placement
+- chess movement/capture (don't forget pawn)
+- movement graphics
+- check and checkmate
+- castling
+- pawn promotion
+- chess piece and board full pictures (do in pixel art)
+
+
+
+Chess placement
+- each chess piece has an x and y value that is relative to the number of squares on a chess board (8 x 8)
+- use the value of 1 - 8 and convert to actual screen value (6 = 500) use constructor?
+
+Chess movement/capture
+- check value of premeditated move and determine if it is valid
+- capture i guess just delete a piece if another one is there
+
+Movement graphics
+- show spaces that the piece can move to
+
+Check and checkmate
+- this is gonna be hard ngl
+
+Castling
+- hrmmmmmm
+
+
+
+
+
+
