@@ -1,7 +1,7 @@
 // MECHANICS //
-- initial background sample
-- chess piece samples
-- basic pygame
+0 initial background sample
+0 chess piece samples
+0 basic pygame
 - chess placement
 - move space
 - chess movement/capture (don't forget pawn)
@@ -15,6 +15,7 @@ Move space
 - is generated whenever a piece is clicked on
 - group of move spaces
 - idea: for loop inside of chess piece, whenever a space is clicked, use that space's position to move the piece
+- better idea: use a 
 
 Chess placement
 - each chess piece has an x and y value that is relative to the number of squares on a chess board (8 x 8)
