@@ -2,10 +2,10 @@
 0 initial background sample
 0 chess piece samples
 0 basic pygame
-- chess placement
-- move space
-- chess movement/capture (don't forget pawn)
-- movement graphics
+0 chess placement
+0 move space
+0 chess movement/capture 
+- all those other pieces' moves (don't forget pawn)
 - check and checkmate
 - castling
 - pawn promotion
@@ -15,7 +15,7 @@ Move space
 - is generated whenever a piece is clicked on
 - group of move spaces
 - idea: for loop inside of chess piece, whenever a space is clicked, use that space's position to move the piece
-- better idea: use a 
+- better idea: use a ALREADY DID IT
 
 Chess placement
 - each chess piece has an x and y value that is relative to the number of squares on a chess board (8 x 8)
@@ -24,9 +24,6 @@ Chess placement
 Chess movement/capture
 - check value of premeditated move and determine if it is valid
 - capture i guess just delete a piece if another one is there
-
-Movement graphics
-- show spaces that the piece can move to
 
 Check and checkmate
 - this is gonna be hard ngl
