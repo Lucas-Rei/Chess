@@ -5,7 +5,7 @@
 0 chess placement
 0 move space
 0 chess movement/capture 
-- all those other pieces' moves (don't forget pawn)
+0 all those other pieces' moves (don't forget pawn)
 - check and checkmate
 - castling
 - pawn promotion
