@@ -26,10 +26,6 @@ Chess movement/capture
 - capture i guess just delete a piece if another one is there
 
 
-- / /  //  YOU MIGHT WANT TO REDO THIS IN THIS WAY ..vhsdoifwfhusd////d/v/f/e 
-- so create the coord list the normal way, but MAKE IT A PROPERTY SO IT CAN BE USED TO CHECK CHECKS
-- coord list will update constantly, but the movespaces are only generated IF the piece is clicked on
-
 Check and checkmate
 - so maybe this
 - use a new list for check_spaces, it will contain coords only
@@ -42,6 +38,11 @@ Stopping illegal moves & Checkmate
 - use the enemy pieces' coord list to determine if the move is valid
 - if there are no valid moves (AKA coord list is empty), and an enemy piece is in view of the king, end the game and the opposite color wins
 - if there are no valid moves, check if any other ally pieces can move. If not, stalemate
+Pins
+- so first you need to determine that a piece is in view of another, and this piece is protecting the king
+- you can do this with like IF self.coord in their moveset and IF color different
+- then idk functeapowreghwriarjrjff
+- ok who cares for now
 
 
 Castling
