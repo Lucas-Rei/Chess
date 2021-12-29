@@ -7,6 +7,8 @@
 0 chess movement/capture 
 0 all those other pieces' moves (don't forget pawn)
 - check and checkmate
+- illegal move prevention
+- blocking check
 - castling
 - pawn promotion
 - chess piece and board full pictures (do in pixel art)
@@ -26,7 +28,7 @@ Chess movement/capture
 - capture i guess just delete a piece if another one is there
 
 
-Check and checkmate
+Check
 - so maybe this
 - use a new list for check_spaces, it will contain coords only
 - make a new method for each piece except for king
@@ -34,19 +36,23 @@ Check and checkmate
 - instead of generating movespaces generate coords
 - use method in king update() to get the list of coords
 - loop thorugh enemy pieces and use list to determine if it has view of the king
-Stopping illegal moves & Checkmate
+Illegal king moves & Checkmate
 - use the enemy pieces' coord list to determine if the move is valid
 - if there are no valid moves (AKA coord list is empty), and an enemy piece is in view of the king, end the game and the opposite color wins
 - if there are no valid moves, check if any other ally pieces can move. If not, stalemate
-Pins
-- so first you need to determine that a piece is in view of another, and this piece is protecting the king
-- you can do this with like IF self.coord in their moveset and IF color different
-- then idk functeapowreghwriarjrjff
-- ok who cares for now
+Pins and other Illegal moves
+- I GOT IT
+- so generation is based on other pieces coords right
+- so after you move a piece the coord is different and 
+Blocking check
+- bro this is so fucking hard i thought this would be eaassysfsaiodfiasfhhsa
 
 
 Castling
 - probably just flags lmao
+
+Pawn promotion
+- just check if its at the "end" (based on color) and make it a queen
 
 Just notes:
 - 60 x 60 for each piece
