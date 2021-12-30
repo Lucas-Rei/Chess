@@ -29,13 +29,9 @@ Chess movement/capture
 
 
 Check
-- so maybe this
-- use a new list for check_spaces, it will contain coords only
-- make a new method for each piece except for king
-- copy paste the moveset generator into this new method, it wont have args btw
-- instead of generating movespaces generate coords
-- use method in king update() to get the list of coords
-- loop thorugh enemy pieces and use list to determine if it has view of the king
+- I AM LOSING MY SHIT
+- ok how about this
+- do rays so blocks can be easier to implement
 Illegal king moves & Checkmate
 - use the enemy pieces' coord list to determine if the move is valid
 - if there are no valid moves (AKA coord list is empty), and an enemy piece is in view of the king, end the game and the opposite color wins
@@ -43,9 +39,12 @@ Illegal king moves & Checkmate
 Pins and other Illegal moves
 - I GOT IT
 - so generation is based on other pieces coords right
-- so after you move a piece the coord is different and 
+- so after you move a piece the coord is different and you can see update other pieces to see if it results in king being attacked
+- if the king will be checked, don't generate that space
 Blocking check
-- bro this is so fucking hard i thought this would be eaassysfsaiodfiasfhhsa
+- so like break "continous" pieces moveset into rays
+- this way when you update the enemy piece you can check the same ray that was attacking
+- lets check the ray to see if it has a move on the king, if not, then run things as normal
 
 
 Castling
