@@ -1,6 +1,7 @@
 from pygame import *
 import pygame
 
+
 def turn_flip():
     global turn
     if turn:
@@ -8,6 +9,24 @@ def turn_flip():
     
     elif not turn:
         turn = True
+
+
+def generate_spaces(click_piece):
+    sprite.Group.empty(moveSpace_group)
+    for piece in piece_group:
+        piece.select = False
+
+    click_piece.select = True
+
+    for ray in click_piece.move_set:
+        for coord in ray:
+            moveSpace_group.add(MoveSpace("circle.png", 60, 60, coord))
+
+def check_bounds(coord):
+    if coord[0] < 0 or coord[0] > 7 or coord[1] < 0 or coord[1] > 7:
+        return False
+    else:
+        return True
 
 # GameSprite class
 class GameSprite(sprite.Sprite): 
@@ -21,6 +40,9 @@ class GameSprite(sprite.Sprite):
         self.color = color
         self.select = select
         self.stop = 1
+        self.move_set = []
+        self.check = False
+        self.attacking = False
 
 
     def reset(self):
@@ -76,310 +98,388 @@ class MoveSpace(GameSprite):
                     piece.select = False
                     sprite.Group.empty(moveSpace_group)
                     turn_flip()
-                if piece.stop == 0:
-                    piece.firstMove = False
+                    piece.update()
+                    if piece.stop == 0:
+                        piece.firstMove = False
+               
 
 
 
 # this is "spot" generating
+# this is fookin bugged mate
 class King(GameSprite):
     def update(self):
-        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select:
-            # clear any other movespaces and change select properties
-            sprite.Group.empty(moveSpace_group)
+        self.move_set.clear()
+        # generate bottom-left
+        self.stop = 1
+        ray = []
+        # make sure it isn't out of bounds
+        if not self.coord[0] - 1 < 0 and not self.coord[1] - 1 < 0: 
             for piece in piece_group:
-                piece.select = False
-
-            self.select = True
-            self.stop = 1
-            # make sure it isn't out of bounds
-            if not self.coord[0] - 1 < 0 and not self.coord[1] - 1 < 0: 
-                # check for collisions with pieces
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] - 1, self.coord[1] - 1]:
-                        if piece.color == self.color:
+                # check for collision with allies
+                if piece.coord == [self.coord[0] - 1, self.coord[1] - 1] and piece.color == self.color:
+                    self.stop = 2
+                    break
+                # check for enemies within view
+                for ray in piece.move_set:
+                    for coord in ray:
+                        if coord == [self.coord[0] - 1, self.coord[1] - 1] and piece.color != self.color:
                             self.stop = 2
-                
-                # don't generate if it's an ally
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] - 1, self.coord[1] - 1]))
+                            break
             
-            self.stop = 1
-            if not self.coord[0] - 1 < 0: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] - 1, self.coord[1]]:
-                        if piece.color == self.color:
+            if self.stop != 2:
+                ray.append([self.coord[0] - 1, self.coord[1] - 1])
+        
+        self.move_set.append(ray)
+        
+        # generate left
+        self.stop = 1
+        ray = []
+        if not self.coord[0] - 1 < 0: 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0] - 1, self.coord[1]] and piece.color == self.color:
+                    self.stop = 2
+                    break
+                for ray in piece.move_set:
+                    for coord in ray:
+                        if coord == [self.coord[0] - 1, self.coord[1]] and piece.color != self.color:
                             self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] - 1, self.coord[1]]))
-
-            self.stop = 1
-            if not self.coord[0] - 1 < 0 and not self.coord[1] + 1 > 7: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] - 1, self.coord[1] + 1]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] - 1, self.coord[1] + 1]))
-
-            self.stop = 1
-            if not self.coord[1] + 1 > 7: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0], self.coord[1] + 1]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0], self.coord[1] + 1]))
-
-            self.stop = 1
-            if not self.coord[0] + 1 > 7 and not self.coord[1] + 1 > 7: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] + 1, self.coord[1] + 1]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] + 1, self.coord[1] + 1]))
-
-            self.stop = 1
-            if not self.coord[0] + 1 > 7: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] + 1, self.coord[1]]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] + 1, self.coord[1]]))
-
-            self.stop = 1
-            if not self.coord[0] + 1 > 7 and not self.coord[1] - 1 < 0: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] + 1, self.coord[1] - 1]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] + 1, self.coord[1] - 1]))   
-
-            self.stop = 1
-            if not self.coord[1] - 1 < 0:   
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0], self.coord[1] - 1]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:              
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0], self.coord[1] - 1]))
+                            break
             
+            if self.stop != 2:
+                ray.append([self.coord[0] - 1, self.coord[1]])
+        
+        self.move_set.append(ray)
 
+        # generate top-left
+        self.stop = 1
+        ray = []
+        if not self.coord[0] - 1 < 0 and not self.coord[1] + 1 < 0: 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0] - 1, self.coord[1] + 1] and piece.color == self.color:
+                    self.stop = 2
+                    break
+                for ray in piece.move_set:
+                    for coord in ray:
+                        if coord == [self.coord[0] - 1, self.coord[1] + 1] and piece.color != self.color:
+                            self.stop = 2
+                            break
+            
+            if self.stop != 2:
+                ray.append([self.coord[0] - 1, self.coord[1] + 1])
+        
+        self.move_set.append(ray)
 
+        # generate up
+        self.stop = 1
+        ray = []
+        if not self.coord[1] + 1 > 7: 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0], self.coord[1] + 1] and piece.color == self.color:
+                    self.stop = 2
+                    break
+                for ray in piece.move_set:
+                    for coord in ray:
+                        if coord == [self.coord[0], self.coord[1] + 1] and piece.color != self.color:
+                            self.stop = 2
+                            break
+            
+            if self.stop != 2:
+                ray.append([self.coord[0], self.coord[1] + 1])
+        
+        self.move_set.append(ray)
+
+        # generate top-right
+        self.stop = 1
+        ray = []
+        if not self.coord[0] + 1 > 7 and not self.coord[1] + 1 > 7: 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0] + 1, self.coord[1] + 1] and piece.color == self.color:
+                    self.stop = 2
+                    break
+                for ray in piece.move_set:
+                    for coord in ray:
+                        if coord == [self.coord[0] + 1, self.coord[1] + 1] and piece.color != self.color:
+                            self.stop = 2
+                            break
+            
+            if self.stop != 2:
+                ray.append([self.coord[0] + 1, self.coord[1] + 1])
+        
+        self.move_set.append(ray)
+
+        # generate right
+        self.stop = 1
+        ray = []
+        if not self.coord[0] + 1 > 7: 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0] + 1, self.coord[1]] and piece.color == self.color:
+                    self.stop = 2
+                    break
+                for ray in piece.move_set:
+                    for coord in ray:
+                        if coord == [self.coord[0] + 1, self.coord[1]] and piece.color != self.color:
+                            self.stop = 2
+                            break
+            
+            if self.stop != 2:
+                ray.append([self.coord[0] + 1, self.coord[1]])
+        
+        self.move_set.append(ray)
+
+        # generate bottom-right
+        self.stop = 1
+        ray = []
+        if not self.coord[0] + 1 > 7 and not self.coord[1] - 1 < 0: 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0] + 1, self.coord[1] - 1] and piece.color == self.color:
+                    self.stop = 2
+                    break
+                for ray in piece.move_set:
+                    for coord in ray:
+                        if coord == [self.coord[0] + 1, self.coord[1] - 1] and piece.color != self.color:
+                            self.stop = 2
+                            break
+            
+            if self.stop != 2:
+                ray.append([self.coord[0] + 1, self.coord[1] - 1])
+        
+        self.move_set.append(ray)
+
+        # generate down
+        self.stop = 1
+        ray = []
+        if not self.coord[1] - 1 < 0: 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0], self.coord[1] - 1] and piece.color == self.color:
+                    self.stop = 2
+                    break
+                for ray in piece.move_set:
+                    for coord in ray:
+                        if coord == [self.coord[0], self.coord[1] - 1] and piece.color != self.color:
+                            self.stop = 2
+                            break
+            
+            if self.stop != 2:
+                ray.append([self.coord[0], self.coord[1] - 1])
+        
+        self.move_set.append(ray)
+
+        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select:
+            generate_spaces(self)
+
+    def check_check(self):
+        # checking for enemy check
+        if self.color == "white":
+            for enemy in black_sub:
+                for coord in enemy.move_set:
+                    if coord == self.coord:
+                        enemy.attacking = True
+                        for piece in white_sub:
+                            piece.check = True
+                        print("check on white")
+
+        elif self.color == "black":
+            for enemy in white_sub:
+                for coord in enemy.move_set:
+                    if coord == self.coord:
+                        for piece in black_sub:
+                            piece.check = True
+                        print("check on white")
+            
+            
 class Queen(GameSprite):
     def update(self):
-        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select:
-            sprite.Group.empty(moveSpace_group)
+        self.move_set.clear()
+        # generate top-left
+        x_var = self.coord[0] - 1
+        y_var = self.coord[1] + 1
+        self.stop = 1 
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
             for piece in piece_group:
-                piece.select = False
-
-            self.select = True
-
-            # generate top-left
-            x_var = self.coord[0] - 1
-            y_var = self.coord[1] + 1
-            self.stop = 1 
-            for i in range(7):
-                if self.stop == 3:
-                    break
-
-                for piece in piece_group:
-                    if piece.coord == [x_var, y_var]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-                if x_var < 0 or y_var > 7 or self.stop == 2:
-                    break   
-
-                new = MoveSpace("circle.png", 60, 60, [x_var, y_var])
-                moveSpace_group.add(new)
-                x_var -= 1
-                y_var += 1
+                if piece.coord == [x_var, y_var]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if x_var < 0 or y_var > 7 or self.stop == 2:
+                break   
+            ray.append([x_var, y_var])
+            x_var -= 1
+            y_var += 1
+        
+        self.move_set.append(ray)
 
 
-            # generate top-right
-            x_var = self.coord[0] + 1
-            y_var = self.coord[1] + 1
-            self.stop = 1
-            for i in range(7):
-                if self.stop == 3:
-                    break
+        # generate top-right
+        x_var = self.coord[0] + 1
+        y_var = self.coord[1] + 1
+        self.stop = 1
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
+            for piece in piece_group:
+                if piece.coord == [x_var, y_var]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if x_var > 7 or y_var > 7 or self.stop == 2:
+                break   
+            ray.append([x_var, y_var])
+            x_var += 1
+            y_var += 1
 
-                for piece in piece_group:
-                    if piece.coord == [x_var, y_var]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-                if x_var > 7 or y_var > 7 or self.stop == 2:
-                    break   
-
-                new = MoveSpace("circle.png", 60, 60, [x_var, y_var])
-                moveSpace_group.add(new)
-                x_var += 1
-                y_var += 1
-
-
-            # generate bottom-right
-            x_var = self.coord[0] + 1
-            y_var = self.coord[1] - 1
-            self.stop = 1
-            for i in range(7):
-                if self.stop == 3:
-                    break
-
-                for piece in piece_group:
-                    if piece.coord == [x_var, y_var]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-                if x_var > 7 or y_var < 0 or self.stop == 2:
-                    break   
-
-                new = MoveSpace("circle.png", 60, 60, [x_var, y_var])
-                moveSpace_group.add(new)
-                x_var += 1
-                y_var -= 1
+        self.move_set.append(ray)
 
 
-            # generate bottom-left
-            x_var = self.coord[0] - 1
-            y_var = self.coord[1] - 1
-            self.stop = 1
-            for i in range(7):
-                if self.stop == 3:
-                    break
+        # generate bottom-right
+        x_var = self.coord[0] + 1
+        y_var = self.coord[1] - 1
+        self.stop = 1
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
+            for piece in piece_group:
+                if piece.coord == [x_var, y_var]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if x_var > 7 or y_var < 0 or self.stop == 2:
+                break   
+            ray.append([x_var, y_var])
+            x_var += 1
+            y_var -= 1
 
-                for piece in piece_group:
-                    if piece.coord == [x_var, y_var]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-                if x_var < 0 or y_var < 0 or self.stop == 2:
-                    break   
-
-                new = MoveSpace("circle.png", 60, 60, [x_var, y_var])
-                moveSpace_group.add(new)
-                x_var -= 1
-                y_var -= 1
-
-
-            # generate left
-            x_var = self.coord[0] - 1
-            self.stop = 1
-            for i in range(7):
-                if self.stop == 3:
-                    break
-
-                for piece in piece_group:
-                    if piece.coord == [x_var, self.coord[1]]:
-                        if piece.color == self.color:
-                            self.stop = 2
-
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-
-                if x_var < 0 or self.stop == 2:
-                    break   
+        self.move_set.append(ray)
 
 
-                new = MoveSpace("circle.png", 60, 60, [x_var, self.coord[1]])
-                moveSpace_group.add(new)
-                x_var -= 1
+        # generate bottom-left
+        x_var = self.coord[0] - 1
+        y_var = self.coord[1] - 1
+        self.stop = 1
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
+            for piece in piece_group:
+                if piece.coord == [x_var, y_var]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if x_var < 0 or y_var < 0 or self.stop == 2:
+                break   
+            ray.append([x_var, y_var])
+            x_var -= 1
+            y_var -= 1
+
+        self.move_set.append(ray)
+
+        ###############################
+
+        # generate left
+        x_var = self.coord[0] - 1
+        self.stop = 1
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
+
+            for piece in piece_group:
+                if piece.coord == [x_var, self.coord[1]]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if x_var < 0 or self.stop == 2:
+                break   
+
+            ray.append([x_var, self.coord[1]])
+            x_var -= 1
+
+        self.move_set.append(ray)
+
+        # generate up
+        y_var = self.coord[1] + 1
+        self.stop = 1
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
+            for piece in piece_group:
+                if piece.coord == [self.coord[0], y_var]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if y_var > 7 or self.stop == 2:
+                break   
+            ray.append([self.coord[0], y_var])
+            y_var += 1
+
+        self.move_set.append(ray)
+
+        # generate right
+        x_var = self.coord[0] + 1
+        self.stop = 1
+        ray = []
+        for i in range(7):  
+            if self.stop == 3:
+                break
+            for piece in piece_group:
+                if piece.coord == [x_var, self.coord[1]]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if x_var > 7 or self.stop == 2:
+                break             
+                    
+            ray.append([x_var, self.coord[1]])
+            x_var += 1
+
+        self.move_set.append(ray)
+
+        # generate down
+        y_var = self.coord[1] - 1
+        self.stop = 1
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
+            for piece in piece_group:
+                if piece.coord == [self.coord[0], y_var]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if y_var < 0 or self.stop == 2:
+                break   
+
+            ray.append([self.coord[0], y_var])
+            y_var -= 1
+
+        self.move_set.append(ray)
 
 
-            # generate up
-            y_var = self.coord[1] + 1
-            self.stop = 1
-            for i in range(7):
-                if self.stop == 3:
-                    break
-
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0], y_var]:
-                        if piece.color == self.color:
-                            self.stop = 2
-
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-
-                if y_var > 7 or self.stop == 2:
-                    break   
-
-
-                new = MoveSpace("circle.png", 60, 60, [self.coord[0], y_var])
-                moveSpace_group.add(new)
-                y_var += 1
-
-
-            # generate right
-            x_var = self.coord[0] + 1
-            self.stop = 1
-            for i in range(7):  
-
-                if self.stop == 3:
-                    break
-
-                for piece in piece_group:
-                    if piece.coord == [x_var, self.coord[1]]:
-                        if piece.color == self.color:
-                            self.stop = 2
-
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-
-                if x_var > 7 or self.stop == 2:
-                    break             
-                        
-
-                new = MoveSpace("circle.png", 60, 60, [x_var, self.coord[1]])
-                moveSpace_group.add(new)
-                x_var += 1
-
-
-            # generate down
-            y_var = self.coord[1] - 1
-            self.stop = 1
-            for i in range(7):
-                if self.stop == 3:
-                    break
-
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0], y_var]:
-                        if piece.color == self.color:
-                            self.stop = 2
-
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-
-                if y_var < 0 or self.stop == 2:
-                    break   
-
-
-                new = MoveSpace("circle.png", 60, 60, [self.coord[0], y_var])
-                moveSpace_group.add(new)
-                y_var -= 1
+        # generating movespaces
+        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select and not self.check:
+            generate_spaces(self)
 
 
 
@@ -387,323 +487,335 @@ class Queen(GameSprite):
 # this is "continous" generating
 class Bishop(GameSprite): 
     def update(self):
-        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select:
-            # clear any other movespaces and change select properties
-            sprite.Group.empty(moveSpace_group)
+        self.move_set.clear()
+        # generate top-left
+        x_var = self.coord[0] - 1
+        y_var = self.coord[1] + 1
+        self.stop = 1 
+        ray = []
+        for i in range(7):
+            # this means the piece has generated a space, and will be able to move onto the enemy piece
+            if self.stop == 3:
+                break
+            # check for collisions with pieces
             for piece in piece_group:
-                piece.select = False
+                if piece.coord == [x_var, y_var]:
+                    # change stop property based on piece properties
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            # this means the piece is going out of bounds or is targeting an ally, it will not generate a space
+            if x_var < 0 or y_var > 7 or self.stop == 2:
+                break  
 
-            self.select = True
-
-            # generate top-left
-            x_var = self.coord[0] - 1
-            y_var = self.coord[1] + 1
-            # make sure it stops when pieces are in the way
-            self.stop = 1 
-            for i in range(7):
-                # this means the piece has generated a space, and will be able to move onto the enemy piece
-                if self.stop == 3:
-                    break
-
-                # check for collisions with pieces
-                for piece in piece_group:
-                    if piece.coord == [x_var, y_var]:
-                        # change stop property based on piece properties
-                        if piece.color == self.color:
-                            self.stop = 2
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-                # this means the piece is going out of bounds or is targeting an ally, it will not generate a space
-                if x_var < 0 or y_var > 7 or self.stop == 2:
-                    break   
-
-                new = MoveSpace("circle.png", 60, 60, [x_var, y_var])
-                moveSpace_group.add(new)
-                x_var -= 1
-                y_var += 1
+            ray.append([x_var, y_var])
+            x_var -= 1
+            y_var += 1
+        
+        self.move_set.append(ray)
 
 
-            # generate top-right
-            x_var = self.coord[0] + 1
-            y_var = self.coord[1] + 1
-            self.stop = 1
-            for i in range(7):
-                if self.stop == 3:
-                    break
+        # generate top-right
+        x_var = self.coord[0] + 1
+        y_var = self.coord[1] + 1
+        self.stop = 1
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
+            for piece in piece_group:
+                if piece.coord == [x_var, y_var]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if x_var > 7 or y_var > 7 or self.stop == 2:
+                break   
 
-                for piece in piece_group:
-                    if piece.coord == [x_var, y_var]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-                if x_var > 7 or y_var > 7 or self.stop == 2:
-                    break   
+            ray.append([x_var, y_var])
+            x_var += 1
+            y_var += 1
 
-                new = MoveSpace("circle.png", 60, 60, [x_var, y_var])
-                moveSpace_group.add(new)
-                x_var += 1
-                y_var += 1
-
-
-            # generate bottom-right
-            x_var = self.coord[0] + 1
-            y_var = self.coord[1] - 1
-            self.stop = 1
-            for i in range(7):
-                if self.stop == 3:
-                    break
-
-                for piece in piece_group:
-                    if piece.coord == [x_var, y_var]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-                if x_var > 7 or y_var < 0 or self.stop == 2:
-                    break   
-
-                new = MoveSpace("circle.png", 60, 60, [x_var, y_var])
-                moveSpace_group.add(new)
-                x_var += 1
-                y_var -= 1
+        self.move_set.append(ray)
 
 
-            # generate bottom-left
-            x_var = self.coord[0] - 1
-            y_var = self.coord[1] - 1
-            self.stop = 1
-            for i in range(7):
-                if self.stop == 3:
-                    break
+        # generate bottom-right
+        x_var = self.coord[0] + 1
+        y_var = self.coord[1] - 1
+        self.stop = 1
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
+            for piece in piece_group:
+                if piece.coord == [x_var, y_var]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if x_var > 7 or y_var < 0 or self.stop == 2:
+                break 
 
-                for piece in piece_group:
-                    if piece.coord == [x_var, y_var]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-                if x_var < 0 or y_var < 0 or self.stop == 2:
-                    break   
+            ray.append([x_var, y_var])
+            x_var += 1
+            y_var -= 1
 
-                new = MoveSpace("circle.png", 60, 60, [x_var, y_var])
-                moveSpace_group.add(new)
-                x_var -= 1
-                y_var -= 1
+        self.move_set.append(ray)
+
+
+        # generate bottom-left
+        x_var = self.coord[0] - 1
+        y_var = self.coord[1] - 1
+        self.stop = 1
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
+            for piece in piece_group:
+                if piece.coord == [x_var, y_var]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if x_var < 0 or y_var < 0 or self.stop == 2:
+                break   
+
+            ray.append([x_var, y_var])
+            x_var -= 1
+            y_var -= 1
+
+        self.move_set.append(ray)
+
+
+        # generating movespaces
+        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select and not self.check:
+            generate_spaces(self)
 
 
 
 class Knight(GameSprite):
     def update(self):
-        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select:
-            sprite.Group.empty(moveSpace_group)
+        # strong is y movement of 2, strong is y movement of 1
+        # weak top-left
+        self.move_set.clear()
+        self.stop = 1
+        ray = []
+        if check_bounds([self.coord[0] - 2, self.coord[1] + 1]): 
             for piece in piece_group:
-                piece.select = False
-
-            # weak top-left
-            self.select = True
-            self.stop = 1
-            if not self.coord[0] - 2 < 0 and not self.coord[1] + 1 > 7: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] - 2, self.coord[1] + 1]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] - 2, self.coord[1] + 1]))
+                if piece.coord == [self.coord[0] - 2, self.coord[1] + 1]:
+                    if piece.color == self.color:
+                        self.stop = 2
             
-            # strong top-left
-            self.stop = 1
-            if not self.coord[0] - 1 < 0 and not self.coord[1] + 2 > 7: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] - 1, self.coord[1] + 2]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] - 1, self.coord[1] + 2]))
+            if self.stop != 2:
+                ray.append([self.coord[0] - 2, self.coord[1] + 1])
 
-            # strong top-right
-            self.stop = 1
-            if not self.coord[0] + 1 > 7 and not self.coord[1] + 2 > 7: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] + 1, self.coord[1] + 2]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] + 1, self.coord[1] + 2]))
+        self.move_set.append(ray)
+        
+        # strong top-left
+        self.stop = 1
+        ray = []
+        if check_bounds([self.coord[0] - 1, self.coord[1] + 2]): 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0] - 1, self.coord[1] + 2]:
+                    if piece.color == self.color:
+                        self.stop = 2
+            
+            if self.stop != 2:
+                ray.append([self.coord[0] - 1, self.coord[1] + 2])
 
-            # weak top-right
-            self.stop = 1
-            if not self.coord[0] + 2 > 7 and not self.coord[1] + 1 > 7: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] + 2, self.coord[1] + 1]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] + 2, self.coord[1] + 1]))
+        self.move_set.append(ray)
 
-            # weak bottom-right
-            self.stop = 1
-            if not self.coord[0] + 2 > 7 and not self.coord[1] -1 < 0: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] + 2, self.coord[1] - 1]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] + 2, self.coord[1] - 1]))
+        # strong top-right
+        self.stop = 1
+        ray = []
+        if check_bounds([self.coord[0] + 1, self.coord[1] + 2]): 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0] + 1, self.coord[1] + 2]:
+                    if piece.color == self.color:
+                        self.stop = 2
+            
+            if self.stop != 2:
+                ray.append([self.coord[0] + 1, self.coord[1] + 2])
 
-            # strong bottom-right
-            self.stop = 1
-            if not self.coord[0] + 1 > 7 and not self.coord[1] - 2 < 0: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] + 1, self.coord[1] - 2]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] + 1, self.coord[1] - 2]))
+        self.move_set.append(ray)
 
-            # strong bottom-left
-            self.stop = 1
-            if not self.coord[0] - 1 < 0 and not self.coord[1] - 2 < 0: 
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] - 1, self.coord[1] - 2]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] - 1, self.coord[1] - 2]))   
+        # weak top-right
+        self.stop = 1
+        ray = []
+        if check_bounds([self.coord[0] + 2, self.coord[1] + 1]): 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0] + 2, self.coord[1] + 1]:
+                    if piece.color == self.color:
+                        self.stop = 2
+            
+            if self.stop != 2:
+                ray.append([self.coord[0] + 2, self.coord[1] + 1])
 
-            # weak bottom-left
-            self.stop = 1
-            if not self.coord[0] - 2 < 0 and not self.coord[1] - 1 < 0:   
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0] - 2, self.coord[1] - 1]:
-                        if piece.color == self.color:
-                            self.stop = 2
-                
-                if self.stop != 2:              
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] - 2, self.coord[1] - 1]))
+        self.move_set.append(ray)
+
+        # weak bottom-right
+        self.stop = 1
+        ray = []
+        if check_bounds([self.coord[0] + 2, self.coord[1] - 1]): 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0] + 2, self.coord[1] - 1]:
+                    if piece.color == self.color:
+                        self.stop = 2
+            
+            if self.stop != 2:
+                ray.append([self.coord[0] + 2, self.coord[1] - 1])
+
+        self.move_set.append(ray)
+
+        # strong bottom-right
+        self.stop = 1
+        ray = []
+        if check_bounds([self.coord[0] + 1, self.coord[1] - 2]): 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0] + 1, self.coord[1] - 2]:
+                    if piece.color == self.color:
+                        self.stop = 2
+            
+            if self.stop != 2:
+                ray.append([self.coord[0] + 1, self.coord[1] - 2])
+
+        self.move_set.append(ray)
+
+        # strong bottom-left
+        self.stop = 1
+        ray = []
+        if check_bounds([self.coord[0] - 1, self.coord[1] - 2]): 
+            for piece in piece_group:
+                if piece.coord == [self.coord[0] - 1, self.coord[1] - 2]:
+                    if piece.color == self.color:
+                        self.stop = 2
+            
+            if self.stop != 2:
+                ray.append([self.coord[0] - 1, self.coord[1] - 2])
+
+        self.move_set.append(ray)
+
+        # weak bottom-left
+        self.stop = 1
+        ray = []
+        if check_bounds([self.coord[0] - 2, self.coord[1] - 1]):   
+            for piece in piece_group:
+                if piece.coord == [self.coord[0] - 2, self.coord[1] - 1]:
+                    if piece.color == self.color:
+                        self.stop = 2
+            
+            if self.stop != 2:              
+                ray.append([self.coord[0] - 2, self.coord[1] - 1])
+
+        self.move_set.append(ray)
+
+        # generate spaces
+        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select and not self.check:
+            generate_spaces(self)
 
 
 
 class Rook(GameSprite):
     def update(self):
-        # generating movespaces
-        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select:
-            sprite.Group.empty(moveSpace_group)
+        self.move_set.clear()
+        # generate left
+        x_var = self.coord[0] - 1
+        self.stop = 1
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
+
             for piece in piece_group:
-                piece.select = False
+                if piece.coord == [x_var, self.coord[1]]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if x_var < 0 or self.stop == 2:
+                break   
 
-            self.select = True
+            ray.append([x_var, self.coord[1]])
+            x_var -= 1
 
-            # generate left
-            x_var = self.coord[0] - 1
-            self.stop = 1
-            for i in range(7):
-                if self.stop == 3:
-                    break
+        self.move_set.append(ray)
 
-                for piece in piece_group:
-                    if piece.coord == [x_var, self.coord[1]]:
-                        if piece.color == self.color:
-                            self.stop = 2
+        # generate up
+        y_var = self.coord[1] + 1
+        self.stop = 1
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
+            for piece in piece_group:
+                if piece.coord == [self.coord[0], y_var]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if y_var > 7 or self.stop == 2:
+                break   
+            ray.append([self.coord[0], y_var])
+            y_var += 1
 
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
+        self.move_set.append(ray)
 
-                if x_var < 0 or self.stop == 2:
-                    break   
+        # generate right
+        x_var = self.coord[0] + 1
+        self.stop = 1
+        ray = []
+        for i in range(7):  
+            if self.stop == 3:
+                break
+            for piece in piece_group:
+                if piece.coord == [x_var, self.coord[1]]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if x_var > 7 or self.stop == 2:
+                break             
+                    
+            ray.append([x_var, self.coord[1]])
+            x_var += 1
 
+        self.move_set.append(ray)
 
-                new = MoveSpace("circle.png", 60, 60, [x_var, self.coord[1]])
-                moveSpace_group.add(new)
-                x_var -= 1
+        # generate down
+        y_var = self.coord[1] - 1
+        self.stop = 1
+        ray = []
+        for i in range(7):
+            if self.stop == 3:
+                break
+            for piece in piece_group:
+                if piece.coord == [self.coord[0], y_var]:
+                    if piece.color == self.color:
+                        self.stop = 2
+                    elif piece.color != self.color:
+                        self.stop = 3
+                    
+            if y_var < 0 or self.stop == 2:
+                break   
 
+            ray.append([self.coord[0], y_var])
+            y_var -= 1
 
-            # generate up
-            y_var = self.coord[1] + 1
-            self.stop = 1
-            for i in range(7):
-                if self.stop == 3:
-                    break
-
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0], y_var]:
-                        if piece.color == self.color:
-                            self.stop = 2
-
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-
-                if y_var > 7 or self.stop == 2:
-                    break   
-
-
-                new = MoveSpace("circle.png", 60, 60, [self.coord[0], y_var])
-                moveSpace_group.add(new)
-                y_var += 1
-
-
-            # generate right
-            x_var = self.coord[0] + 1
-            self.stop = 1
-            for i in range(7):  
-
-                if self.stop == 3:
-                    break
-
-                for piece in piece_group:
-                    if piece.coord == [x_var, self.coord[1]]:
-                        if piece.color == self.color:
-                            self.stop = 2
-
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-
-                if x_var > 7 or self.stop == 2:
-                    break             
-                        
-
-                new = MoveSpace("circle.png", 60, 60, [x_var, self.coord[1]])
-                moveSpace_group.add(new)
-                x_var += 1
-
-
-            # generate down
-            y_var = self.coord[1] - 1
-            self.stop = 1
-            for i in range(7):
-                if self.stop == 3:
-                    break
-
-                for piece in piece_group:
-                    if piece.coord == [self.coord[0], y_var]:
-                        if piece.color == self.color:
-                            self.stop = 2
-
-                        elif piece.color != self.color:
-                            self.stop = 3
-                        
-
-                if y_var < 0 or self.stop == 2:
-                    break   
+        self.move_set.append(ray)
 
 
-                new = MoveSpace("circle.png", 60, 60, [self.coord[0], y_var])
-                moveSpace_group.add(new)
-                y_var -= 1
+        # generating movespaces
+        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select and not self.check:
+            generate_spaces(self)
+
 
 
 
@@ -714,14 +826,9 @@ class Pawn(GameSprite):
 
     def update(self):
         # for white pawns
-        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select and self.color == "white":
-            sprite.Group.empty(moveSpace_group)
-            for piece in piece_group:
-                piece.select = False
-
-            self.select = True
-            self.stop = 1
-
+        if self.color == "white":
+            self.move_set.clear()
+            ray = []
             if self.firstMove:
                 for piece in piece_group:
                     if piece.coord == [self.coord[0], self.coord[1] + 1]:
@@ -730,13 +837,16 @@ class Pawn(GameSprite):
                         self.stop = 9
 
                 if not self.stop >= 8:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0], self.coord[1] + 2]))
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0], self.coord[1] + 1]))
+                    ray.append([self.coord[0], self.coord[1] + 2])
+                    ray.append([self.coord[0], self.coord[1] + 1])
+                    self.move_set.append(ray)
 
                 if self.stop == 9:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0], self.coord[1] + 1]))
+                    ray.append([self.coord[0], self.coord[1] + 1])
+                    self.move_set.append(ray)
 
                 self.stop = 0
+                
 
 
             else:
@@ -745,25 +855,24 @@ class Pawn(GameSprite):
                         self.stop = 8
 
                 if self.stop != 8:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0], self.coord[1] + 1]))
+                    ray.append([self.coord[0], self.coord[1] + 1])
+                    self.move_set.append(ray)
 
 
+            ray = []
             for piece in piece_group:
                 if piece.coord == [self.coord[0] - 1, self.coord[1] + 1] and piece.color != self.color:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] - 1, self.coord[1] + 1]))
+                    ray.append([self.coord[0] - 1, self.coord[1] + 1])
                 if piece.coord == [self.coord[0] + 1, self.coord[1] + 1] and piece.color != self.color:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] + 1, self.coord[1] + 1]))
+                    ray.append([self.coord[0] + 1, self.coord[1] + 1])
+
+            self.move_set.append(ray)
 
 
         # for black pawns
-        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select and self.color == "black":
-            sprite.Group.empty(moveSpace_group)
-            for piece in piece_group:
-                piece.select = False
-
-            self.select = True
-            self.stop = 1
-
+        if self.color == "black":
+            self.move_set.clear()
+            ray = []
             if self.firstMove:
                 for piece in piece_group:
                     if piece.coord == [self.coord[0], self.coord[1] - 1]:
@@ -772,13 +881,16 @@ class Pawn(GameSprite):
                         self.stop = 9
 
                 if not self.stop >= 8:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0], self.coord[1] - 2]))
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0], self.coord[1] - 1]))
+                    ray.append([self.coord[0], self.coord[1] - 2])
+                    ray.append([self.coord[0], self.coord[1] - 1])
+                    self.move_set.append(ray)
 
                 if self.stop == 9:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0], self.coord[1] - 1]))
+                    ray.append([self.coord[0], self.coord[1] - 1])
+                    self.move_set.append(ray)
 
                 self.stop = 0
+                
 
 
             else:
@@ -787,14 +899,62 @@ class Pawn(GameSprite):
                         self.stop = 8
 
                 if self.stop != 8:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0], self.coord[1] - 1]))
+                    ray.append([self.coord[0], self.coord[1] - 1])
+                    self.move_set.append(ray)
 
 
+            ray = []
             for piece in piece_group:
                 if piece.coord == [self.coord[0] - 1, self.coord[1] - 1] and piece.color != self.color:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] - 1, self.coord[1] - 1]))
+                    ray.append([self.coord[0] - 1, self.coord[1] - 1])
                 if piece.coord == [self.coord[0] + 1, self.coord[1] - 1] and piece.color != self.color:
-                    moveSpace_group.add(MoveSpace("circle.png", 60, 60, [self.coord[0] + 1, self.coord[1] - 1]))
+                    ray.append([self.coord[0] + 1, self.coord[1] - 1])
+                    
+            self.move_set.append(ray)
+
+
+        if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select and not self.check:
+            generate_spaces(self)
+
+        # elif pygame.mouse.get_pressed()[0] and self.rect.collidepoint(pygame.mouse.get_pos()) and not self.select and self.check:
+        #     save = self.coord
+        #     for coord in self.move_set:
+        #         for piece in piece_group:
+        #             if piece.attacking and piece.color != self.color:
+        #                 for enemy_coord in piece.move_set:
+        #                     if enemy_coord == coord:
+        #                         self.coord = enemy_coord
+        #                         if self.color == "white":
+        #                             whiteKing.check_check()
+        #                             # successful block
+        #                             if not whiteKing.check:
+        #                                 sprite.Group.empty(moveSpace_group)
+        #                                 for piece in piece_group:
+        #                                     piece.select = False
+
+        #                                 self.select = True
+        #                                 moveSpace_group.add(MoveSpace("circle.png", 60, 60, coord))
+        #                                 self.coord = save
+
+        #                             # unsuccessful block
+        #                             else:
+        #                                 continue
+
+        #                         elif self.color == "black":
+        #                             blackKing.check_check()
+        #                             # successful block
+        #                             if not blackKing.check:
+        #                                 sprite.Group.empty(moveSpace_group)
+        #                                 for piece in piece_group:
+        #                                     piece.select = False
+
+        #                                 self.select = True
+        #                                 moveSpace_group.add(MoveSpace("circle.png", 60, 60, coord))
+        #                                 self.coord = save
+
+        #                             # unsuccessful block
+        #                             else:
+        #                                 continue
 
 
 # creation
@@ -888,15 +1048,15 @@ blackBishop1 = Bishop("black bishop.jfif", 60, 60, [2, 7], "black")
 piece_group.add(blackBishop1)
 black_sub.add(blackBishop1)
 
-blackBishop2= Bishop("black bishop.jfif", 60, 60, [5, 7], "black")
+blackBishop2 = Bishop("black bishop.jfif", 60, 60, [5, 7], "black")
 piece_group.add(blackBishop2)
 black_sub.add(blackBishop2)
 
-blackKnight1 = Knight("black horse.jpg", 60, 60, [1, 7], "black")
+blackKnight1 = Knight("black horse.png", 60, 60, [1, 7], "black") #remember to size fix this
 piece_group.add(blackKnight1)
 black_sub.add(blackKnight1)
 
-blackKnight2 = Knight("black horse.jpg", 60, 60, [6, 7], "black")
+blackKnight2 = Knight("black horse.png", 60, 60, [6, 7], "black")
 piece_group.add(blackKnight2)
 black_sub.add(blackKnight2)
 
@@ -973,7 +1133,10 @@ while run:
     if not turn:
         black_sub.update()
 
-    moveSpace_group.update()
 
+    moveSpace_group.update()
     pygame.display.update()
+
+    whiteKing.check_check()
+    blackKing.check_check()
     clock.tick(FPS)
